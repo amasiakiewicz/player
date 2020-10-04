@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlayerFacade {
 
     private static final String PLAYER_CREATED_TOPIC = "PlayerCreated";
-    private static final String PLAYER_TEAM_CHANGED_TOPIC = "PlayerTeamChanged";
     private static final String PLAYER_DELETED_TOPIC = "PlayerDeleted";
 
     private final PlayerRepository playerRepository;
@@ -71,8 +70,6 @@ public class PlayerFacade {
 
         final Player player = findPlayer(playerId);
         player.changeTeam(newTeamId);
-
-        kafkaTemplate.send(PLAYER_TEAM_CHANGED_TOPIC, playerId, newTeamId);
     }
 
     public void deletePlayer(final UUID playerId) {
