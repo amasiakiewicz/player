@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.casinoroyale.player.player.dto.CreatePlayerDto;
-import com.casinoroyale.player.player.dto.PlayerCreatedQueryDto;
+import com.casinoroyale.player.player.dto.PlayerQueryDto;
 import com.casinoroyale.player.player.dto.UpdatePlayerDto;
 import com.casinoroyale.player.team.domain.TestTeamFacade;
 import org.junit.jupiter.api.Test;
@@ -45,11 +45,12 @@ class PlayerFacadeIT {
         final CreatePlayerDto createPlayerDto = givenCreatePlayerDto(name, number, college, teamId, dateOfBirth, playStart);
 
         //when
-        final PlayerCreatedQueryDto playerDto = playerFacade.createPlayer(createPlayerDto);
+        final PlayerQueryDto createdPlayer = playerFacade.createPlayer(createPlayerDto);
 
         //then
-        assertThat(existingPlayerInDb(playerDto))
-                .usingRecursiveComparison(builder().withIgnoredFields("id", "version", "createdDateTime").build())
+        assertThat(createdPlayer)
+                .isEqualTo(existingPlayerInDb(createdPlayer.getPlayerId()))
+                .usingRecursiveComparison(builder().withIgnoredFields("playerId").build())
                 .isEqualTo(expectedPlayer(name, college, number, teamId, dateOfBirth, playStart));
     }
 
@@ -88,11 +89,12 @@ class PlayerFacadeIT {
         final UpdatePlayerDto updatePlayerDto = new UpdatePlayerDto(newCollege, newNumber);
 
         //when
-        playerFacade.updatePlayer(playerId, updatePlayerDto);
+        final PlayerQueryDto updatedPlayer = playerFacade.updatePlayer(playerId, updatePlayerDto);
 
         //then
-        assertThat(existingPlayerInDb(playerId))
-                .usingRecursiveComparison(builder().withIgnoredFields("id", "version", "createdDateTime").build())
+        assertThat(updatedPlayer)
+                .isEqualTo(existingPlayerInDb(updatedPlayer.getPlayerId()))
+                .usingRecursiveComparison(builder().withIgnoredFields("playerId").build())
                 .isEqualTo(expectedPlayer(name, newCollege, newNumber, teamId, dateOfBirth, playStart));
     }
 
@@ -114,7 +116,7 @@ class PlayerFacadeIT {
 
         //then
         assertThat(existingPlayerInDb(playerId))
-                .usingRecursiveComparison(builder().withIgnoredFields("id", "version", "createdDateTime").build())
+                .usingRecursiveComparison(builder().withIgnoredFields("playerId").build())
                 .isEqualTo(expectedPlayer(name, college, number, newTeamId, dateOfBirth, playStart));
     }
 
@@ -188,9 +190,9 @@ class PlayerFacadeIT {
     ) {
         final CreatePlayerDto createPlayerDto =
                 givenCreatePlayerDto(name, number, college, teamId, dateOfBirth, playStart);
-        final PlayerCreatedQueryDto playerCreatedQueryDto = playerFacade.createPlayer(createPlayerDto);
+        final PlayerQueryDto playerQueryDto = playerFacade.createPlayer(createPlayerDto);
 
-        return playerCreatedQueryDto.getPlayerId();
+        return playerQueryDto.getPlayerId();
     }
 
     private UUID givenTeamNotInDb() {
@@ -201,12 +203,11 @@ class PlayerFacadeIT {
         return testTeamFacade.givenTeamInDb();
     }
 
-    private Player expectedPlayer(
+    private PlayerQueryDto expectedPlayer(
             final String name, final String college, final int number, final UUID teamId, final LocalDate dateOfBirth,
             final LocalDate playStart
     ) {
-        final CreatePlayerDto createPlayerDto = givenCreatePlayerDto(name, number, college, teamId, dateOfBirth, playStart);
-        return Player.create(createPlayerDto);
+        return new PlayerQueryDto(randomUUID(), name, number, college, teamId, dateOfBirth, playStart);
     }
 
     private CreatePlayerDto givenCreatePlayerDto(
@@ -224,14 +225,10 @@ class PlayerFacadeIT {
         return createPlayerDto;
     }
 
-    private Player existingPlayerInDb(final PlayerCreatedQueryDto playerCreatedQueryDto) {
-        final UUID playerId = playerCreatedQueryDto.getPlayerId();
-        return existingPlayerInDb(playerId);
-    }
-
-    private Player existingPlayerInDb(final UUID playerId) {
-        return playerRepository
+    private PlayerQueryDto existingPlayerInDb(final UUID playerId) {
+        final Player player = playerRepository
                 .findById(playerId)
                 .orElseThrow(IllegalStateException::new);
+        return player.toQueryDto();
     }
 }

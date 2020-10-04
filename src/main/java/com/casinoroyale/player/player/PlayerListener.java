@@ -1,8 +1,11 @@
 package com.casinoroyale.player.player;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.UUID;
 
 import com.casinoroyale.player.player.domain.PlayerFacade;
+import com.casinoroyale.transfer.team.dto.FeePlayerTransferredNoticeDto;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -16,10 +19,13 @@ class PlayerListener {
         this.playerFacade = playerFacade;
     }
 
-    @KafkaListener(topics = "PlayerTransferred")
-    public void listenCreated(ConsumerRecord<UUID, UUID> kafkaMessage) {
-        final UUID playerId = kafkaMessage.key();
-        final UUID newTeamId = kafkaMessage.value();
+    @KafkaListener(topics = "FeeAndPlayerTransferred")
+    public void listenTransferred(ConsumerRecord<String, FeePlayerTransferredNoticeDto> kafkaMessage) {
+        final FeePlayerTransferredNoticeDto feePlayerTransferredNoticeDto = kafkaMessage.value();
+        checkArgument(feePlayerTransferredNoticeDto != null);
+
+        final UUID playerId = feePlayerTransferredNoticeDto.getPlayerId();
+        final UUID newTeamId = feePlayerTransferredNoticeDto.getBuyerTeamId();
 
         playerFacade.changePlayersTeam(playerId, newTeamId);
     }

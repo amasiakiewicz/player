@@ -9,7 +9,6 @@ import java.util.UUID;
 
 import com.casinoroyale.player.player.dto.CreatePlayerDto;
 import com.casinoroyale.player.player.dto.CreatePlayerNoticeDto;
-import com.casinoroyale.player.player.dto.PlayerCreatedQueryDto;
 import com.casinoroyale.player.player.dto.PlayerQueryDto;
 import com.casinoroyale.player.player.dto.UpdatePlayerDto;
 import com.casinoroyale.player.team.domain.TeamFacade;
@@ -39,7 +38,7 @@ public class PlayerFacade {
                 .map(Player::toQueryDto);
     }
 
-    public PlayerCreatedQueryDto createPlayer(final CreatePlayerDto createPlayerDto) {
+    public PlayerQueryDto createPlayer(final CreatePlayerDto createPlayerDto) {
         checkArgument(createPlayerDto != null);
 
         final UUID teamId = createPlayerDto.getTeamId();
@@ -51,16 +50,17 @@ public class PlayerFacade {
         final CreatePlayerNoticeDto createPlayerNoticeDto = player.toCreateNoticeDto();
         kafkaTemplate.send(PLAYER_CREATED_TOPIC, "", createPlayerNoticeDto);
 
-        final UUID playerId = player.getId();
-        return new PlayerCreatedQueryDto(playerId);
+        return player.toQueryDto();
     }
 
-    public void updatePlayer(final UUID playerId, final UpdatePlayerDto updatePlayerDto) {
+    public PlayerQueryDto updatePlayer(final UUID playerId, final UpdatePlayerDto updatePlayerDto) {
         checkArgument(playerId != null);
         checkArgument(updatePlayerDto != null);
 
         final Player player = findPlayer(playerId);
         player.update(updatePlayerDto);
+
+        return player.toQueryDto();
     }
 
     public void changePlayersTeam(final UUID playerId, final UUID newTeamId) {

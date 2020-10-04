@@ -9,7 +9,6 @@ import javax.validation.Valid;
 
 import com.casinoroyale.player.player.domain.PlayerFacade;
 import com.casinoroyale.player.player.dto.CreatePlayerDto;
-import com.casinoroyale.player.player.dto.PlayerCreatedQueryDto;
 import com.casinoroyale.player.player.dto.PlayerQueryDto;
 import com.casinoroyale.player.player.dto.UpdatePlayerDto;
 import org.springframework.data.domain.Page;
@@ -42,16 +41,16 @@ class PlayerCrudController {
 
     @ResponseStatus(CREATED)
     @PostMapping
-    PlayerCreatedQueryDto createPlayer(@Valid @RequestBody final CreatePlayerDto createPlayerDto) {
+    PlayerQueryDto createPlayer(@Valid @RequestBody final CreatePlayerDto createPlayerDto) {
         return playerFacade.createPlayer(createPlayerDto);
     }
 
     @PutMapping("/{playerId}")
-    void updatePlayer(
+    PlayerQueryDto updatePlayer(
             @PathVariable final UUID playerId,
             @Valid @RequestBody final UpdatePlayerDto updatePlayerDto
     ) {
-        playerFacade.updatePlayer(playerId, updatePlayerDto);
+        return playerFacade.updatePlayer(playerId, updatePlayerDto);
     }
 
     @ResponseStatus(NO_CONTENT)
